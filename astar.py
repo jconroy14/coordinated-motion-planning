@@ -56,7 +56,6 @@ def astar(start_pos, end_pos, obstacles, all_paths = []):
     start_state = state(start_pos, 0, end_pos, None)
     heapq.heappush(open_heap, start_state)
 
-    initial_thing = True
     while open_heap:
         curr_node = heapq.heappop(open_heap)
         neighbors = get_neighbors(curr_node.pos, curr_node.cost, obstacles, all_paths)

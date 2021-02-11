@@ -4,6 +4,8 @@ from cgshop2021_pyutils import Solution, SolutionStep, SolutionZipWriter, Direct
 import numpy as np
 import matplotlib.pyplot as plt
 
+from timeit import default_timer as timer
+
 from robot_visualization import draw_soln, draw_pos
 from astar import astar
 
@@ -23,6 +25,7 @@ from astar import astar
 #                              in the solution (helpful for visualization)
 # - soln is a cgshop2021_pyutils Solution object
 def priority_planning(inst):
+    start = timer()
     all_paths = []
     for n, (start_pos, end_pos) in enumerate(zip(inst.start, inst.target)):
         print("Planning robot", n)
@@ -39,6 +42,10 @@ def priority_planning(inst):
     max_x = max([max([x for (x, y) in path]) for path in all_paths])
     min_y = min([min([y for (x, y) in path]) for path in all_paths])
     max_y = max([max([y for (x, y) in path]) for path in all_paths])
+
+    end = timer()
+    print("EXECUTION TIME:", (end-start) * 1000, "(ms)")
+
     soln = convert_paths_into_soln(inst, all_paths)
     return (min_x, max_x, min_y, max_y, soln)
 
@@ -106,6 +113,7 @@ if __name__ == '__main__':
     path =  astar((0,0), (9, 2), i.obstacles, i.target)
     print(path)
     print('------')
+
     min_x, max_x, min_y, max_y, soln = priority_planning(i)
     
     draw_soln(soln, "Greens", min_x, max_x, min_y, max_y)
