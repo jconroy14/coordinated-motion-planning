@@ -8,8 +8,8 @@ py"""
 import cgshop2021_pyutils
 
 def load_instance():
-    #idb = cgshop2021_pyutils.InstanceDatabase('../cgshop_2021_instances.zip')
-    idb = cgshop2021_pyutils.InstanceDatabase('../test_instances.zip')
+    idb = cgshop2021_pyutils.InstanceDatabase('../cgshop_2021_instances.zip')
+    #idb = cgshop2021_pyutils.InstanceDatabase('../test_instances.zip')
     instance_list = list(idb)
     i = instance_list[0] # 10 robots (smallest instance)
     return i
@@ -52,16 +52,16 @@ function sort_row(mesh, row, to_right = true)
     while !sorted
         sorted = true
         for i in 2:2:(len-1)
-            if ((to_right && (mesh[i, row] < mesh[i + 1, row])) ||
-                (!to_right && (mesh[i, row] > mesh[i + 1, row])))
+            if ((to_right && (mesh[i, row] > mesh[i + 1, row])) ||
+                (!to_right && (mesh[i, row] < mesh[i + 1, row])))
                 mesh = swap(mesh, i, i + 1, row, row)
                 sorted = false
             end
         end
 
         for i in 1:2:(len-1)
-            if ((to_right && (mesh[i, row] < mesh[i + 1, row])) ||
-                (!to_right && (mesh[i, row] > mesh[i + 1, row])))
+            if ((to_right && (mesh[i, row] > mesh[i + 1, row])) ||
+                (!to_right && (mesh[i, row] < mesh[i + 1, row])))
                 mesh = swap(mesh, i, i + 1, row, row)
                 sorted = false
             end
@@ -84,7 +84,7 @@ function rotate_col(mesh, col, numsteps)
     old_col = copy(mesh[col, :])
     collen = size(old_col)[1]
     for i in 1:collen
-        new_value = old_col[(i - numsteps - i + collen) % collen + 1]
+        new_value = old_col[(i - numsteps - 1 + collen) % collen + 1]
         mesh[col, i] = new_value
     end
     return mesh
@@ -128,7 +128,6 @@ function balance_horizontal(mesh)
     for row in 1:num_rows
         mesh = sort_row(mesh, row)
     end
-
     return mesh
 end
 
@@ -197,10 +196,16 @@ function rotate_sort(mesh)
     append!(chunks, [[delim_lines[end], num_rows]])
     println("horizontal chunks: $chunks")
 
+    println("\n Processing Horizontal Chunks:")
     for (a, b) in chunks
+        println("\n After processing Chunk [$a, $b]:")
         curr_slice = mesh[:, a:b]
+        # show(stdout, "text/plain", curr_slice)
+        # println("--")
         balanced_slice = balance_horizontal(curr_slice)
+        # show(stdout, "text/plain", balanced_slice)
         mesh[:, a:b] = balanced_slice
+        show(stdout, "text/plain", mesh)
     end
 
     println("3. Balance each horizontal slice")
@@ -248,7 +253,7 @@ function robot_rotate_sort(inst)
 
     ### Decide sorted order ###
     # Lexicographical order: primarily determined by y, then by x
-    max_x = maximum([x for (x, y) in vcat(start, target)]) + 1
+    max_x = maximum([x for (x, y) in vcat(start, target)])
     max_y = maximum([y for (x, y) in vcat(start, target)])
     ncols = max_x + 1
     nrows = max_y + 1
@@ -314,14 +319,13 @@ function robot_rotate_sort(inst)
 end
 
 function order_to_pos(index, max_x, max_y)
-    placeholder_x = index % max_x
-    y = floor(Int64, (index - placeholder_x)/max_x)
-    x = max_x - placeholder_x - 1
+    x = index % max_x
+    y = floor(Int64, (index - x)/max_x)
     return [x, y]
 end
 
 function pos_to_order(x, y, max_x, max_y)
-    return max_x * y + (max_x - x - 1)
+    return max_x * y + x
 end
 
 
