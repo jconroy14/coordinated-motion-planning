@@ -157,17 +157,17 @@ def visualize_all_paths(inst, all_paths):
     
 """
 
-println("Loading instance")
-inst = py"load_instance"()
+# println("Loading instance")
+# inst = py"load_instance"()
 
-println("Planning paths")
-#all_paths = [[collect(pos)] for pos in inst[:start]]
-all_paths = priority_planning(inst)
-println("-------")
-println(all_paths)
+# println("Planning paths")
+# #all_paths = [[collect(pos)] for pos in inst[:start]]
+# all_paths = priority_planning(inst)
+# println("-------")
+# println(all_paths)
 
-println("Visualizing paths")
-py"visualize_all_paths"(inst, all_paths)
+# println("Visualizing paths")
+# py"visualize_all_paths"(inst, all_paths)
 
 
 

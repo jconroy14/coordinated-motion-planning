@@ -1,20 +1,22 @@
 using PyCall
 pushfirst!(PyVector(pyimport("sys")."path"), "..")
+pushfirst!(PyVector(pyimport("sys")."path"), "../python_implementation")
 
 # Python for loading instance
 py"""
 import cgshop2021_pyutils
 
 def load_instance():
-    idb = cgshop2021_pyutils.InstanceDatabase('../cgshop_2021_instances.zip')
+    #idb = cgshop2021_pyutils.InstanceDatabase('../cgshop_2021_instances.zip')
+    idb = cgshop2021_pyutils.InstanceDatabase('../test_instances.zip')
     instance_list = list(idb)
-    i = instance_list[194] # 10 robots (smallest instance)
+    i = instance_list[0] # 10 robots (smallest instance)
     return i
 """
 
 i = py"load_instance"()
-obstacles = i[:obstacles]
 targets   = i[:target]
+obstacles = i[:obstacles]
 
 println(obstacles)
 println(targets)
@@ -86,18 +88,4 @@ def check_solution(inst, all_paths):
 
 """
 
-py"draw_and_show_pos"(i[:start], i[:target], i[:start], "Greens", -1, 10, -1, 10)
-
-all_paths = [[(3, 0), (2, 0), (1, 0), (0, 0), (0, 1), (0, 2), (0, 3), (1, 3), (1, 4), (1, 5), (1, 6), (2, 6)],
-[(2, 4), (2, 5)],
-[(0, 3), (0, 2), (-1, 2), (-1, 1), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (4, -1), (5, -1), (6, -1), (7, -1), (8, -1), (9, -1), (10, -1), (10, 0), (10, 1), (10, 2), (9, 2)],
-[(8, 4), (9, 4), (9, 5), (9, 6), (9, 7), (9, 8), (9, 9), (8, 9)],
-[(2, 9), (1, 9), (0, 9)],
-[(3, 9), (3, 8), (2, 8), (2, 7), (2, 6), (1, 6), (1, 5), (0, 5), (0, 4), (0, 3)],
-[(2, 7), (2, 8), (1, 8), (1, 9), (2, 9), (3, 9), (4, 9), (5, 9), (6, 9), (7, 9), (7, 8), (8, 8), (9, 8), (9, 7), (9, 6)],
-[(0, 9), (0, 8), (0, 7), (0, 6)],
-[(2, 0), (1, 0), (0, 0), (-1, 0), (-1, -1), (-2, -1), (-2, 0), (-2, 1), (-2, 2), (-2, 3), (-2, 4), (-1, 4), (-1, 5), (-1, 6), (-1, 7), (-1, 8), (0, 8), (1, 8), (2, 8), (3, 8), (4, 8), (4, 9), (5, 9), (6, 9), (7, 9), (7, 8)],
-[(1, 5), (1, 4), (1, 3), (0, 3), (-1, 3), (-1, 2), (-1, 1), (0, 1), (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (4, -1), (5, -1), (6, -1), (7, -1), (8, -1), (9, -1), (10, -1), (10, 0), (10, 1), (10, 2), (10, 3), (9, 3)]]
-
-
-py"check_solution"(i, all_paths)
+py"draw_and_show_pos"(i[:start], i[:obstacles], i[:target], "Greens", -1, 10, -1, 10)
