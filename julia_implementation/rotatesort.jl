@@ -628,16 +628,90 @@ function compress(inst, expanded_pos)
     return all_paths
 end
 
+function move_to_direction(move)
+    if     move == [0,  1]
+        return "N"
+    elseif move == [0, -1]
+        return "S"
+    elseif move == [1,  0]
+        return "E"
+    elseif move == [-1, 0]
+        return "W"
+    elseif move == [0, 0]
+        return nothing
+    else
+        print("*****************************")
+        print("** ERROR: Robot teleported **")
+        print("*****************************")
+        @assert False
+    end
+end
+
+# Convert all_paths (list of paths) to a cgshop2021_pyutils Solution
+function convert_paths_into_soln(inst, all_paths)
+    solution_arr = []
+    for (robot_idx, path) in enumerate(all_paths)
+        moves = [path[i+1] - path[i] for i in 1:(size(path)[1] - 1)]
+        
+        for (t, move) in enumerate(moves)
+            if t < size(solution_arr)[1]
+                append!(solution_arr[t], [[robot_idx - 1, move]])
+            else
+                append!(solution_arr, [[[robot_idx - 1, move]]])
+            end
+        end
+    end
+    
+    instname = inst[:name]
+    solution = "{\"instance\": \"$instname\", \"steps\": ["
+    for curr_step in solution_arr
+        soln_step = "{"
+        for (robot_idx, move) in curr_step
+            direction = move_to_direction(move)
+            if !isnothing(direction)
+                soln_step = string(soln_step, "\"$robot_idx\": \"$direction\", ")
+            end
+        end
+
+        if soln_step != "{"
+            soln_step = soln_step[1:end-2]
+            soln_step = string(soln_step, "}")
+            solution = string(solution, soln_step)
+            solution = string(solution, ", ")
+        end
+        
+    end
+    println(solution)
+    solution = solution[1:end-2]
+    solution = string(solution, "]}")
+
+    #print('Makespan:', solution.makespan)
+    #print('Sum:', solution.total_moves)
+    return solution
+end
+
+function write_solution(inst, all_paths)
+    instname = inst[:name]
+    soln_string = convert_paths_into_soln(inst, all_paths)
+    filename = "../output/solutions/$instname.json"
+    open(filename, "w") do io
+        write(io, soln_string)
+    end
+end
+
+
+
 #without_obstacles = [0, 3, 4, 7, 11, 12, 13, 14, 15, 18, 19, 21, 22, 25, 26, 31, 34, 36, 37, 38, 39, 40, 42, 47, 49, 51, 52, 53, 57, 59, 62, 65, 67, 71, 72, 74, 75, 76, 77, 78, 84, 85, 86, 87, 89, 90, 93, 96, 97, 98, 100, 101, 102, 103, 104, 108, 111, 112, 114, 116, 117, 118, 120, 121, 122, 125, 126, 127, 129, 131, 132, 135, 140, 141, 142, 143, 144, 145, 146, 149, 150, 151, 154, 157, 158, 159, 160, 162, 165, 167, 169, 171, 173, 174, 176, 180, 183, 188, 192, 195, 196, 198, 202]
-without_obstacles = [7, 11, 13, 14, 15, 18, 19, 21, 22, 25, 26, 31, 34, 36, 37, 38, 39, 40, 42, 47, 49, 51, 52, 53, 57, 59, 62, 65, 67, 71, 72, 74, 75, 76, 77, 78, 84, 85, 86, 87, 89, 90, 93, 96, 97, 98, 100, 101, 102, 103, 104, 108, 111, 112, 114, 116, 117, 118, 120, 121, 122, 125, 126, 127, 129, 131, 132, 135, 140, 141, 142, 143, 144, 145, 146, 149, 150, 151, 154, 157, 158, 159, 160, 162, 165, 167, 169, 171, 173, 174, 176, 180, 183, 188, 192, 195, 196, 198, 202]
+without_obstacles = [21, 22, 25, 26, 31, 34, 36, 37, 38, 39, 40, 42, 47, 49, 51, 52, 53, 57, 59, 62, 65, 67, 71, 72, 74, 75, 76, 77, 78, 84, 85, 86, 87, 89, 90, 93, 96, 97, 98, 100, 101, 102, 103, 104, 108, 111, 112, 114, 116, 117, 118, 120, 121, 122, 125, 126, 127, 129, 131, 132, 135, 140, 141, 142, 143, 144, 145, 146, 149, 150, 151, 154, 157, 158, 159, 160, 162, 165, 167, 169, 171, 173, 174, 176, 180, 183, 188, 192, 195, 196, 198, 202]
 total_to_run = size(without_obstacles)[1]
 for (i, curr_index) in enumerate(without_obstacles)
     inst = py"load_instance"(curr_index)
     println("Obstacles:")
     println(inst[:obstacles])
     all_paths = robot_rotate_sort(inst)
+    write_solution(inst, all_paths)
     #py"validate_paths"(inst, all_paths)
-    py"save_paths"(inst, all_paths)
+    #py"save_paths"(inst, all_paths)
     
     instname = inst[:name]
     println("*********************************************************")
