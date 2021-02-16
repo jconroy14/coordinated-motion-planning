@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 # Note: There are a few bugs in this code: the axes are not labled properly,
 #       not all grid lines show up, and there may be issues with the
 #       bounding box code
-def draw_soln(solution, colors, min_x, max_x, min_y, max_y):
+def draw_soln(solution, colors, min_x, max_x, min_y, max_y, timestep = 1):
     i = solution.instance
     steps = solution.steps
     pos = np.array(i.start)
@@ -25,11 +25,13 @@ def draw_soln(solution, colors, min_x, max_x, min_y, max_y):
                                   min_y - 1 - BUFFER, max_y + 1 + BUFFER)
     draw_pos(pos, i.obstacles, i.target, colors, min_x, max_x, min_y, max_y)
     plt.show()
-    for step in steps:
+    for t, step in enumerate(steps):
         for robot_idx, move_dir in step._directions.items():
             pos[robot_idx] += np.array(move_dir.value)
-        draw_pos(pos, i.obstacles, i.target, colors, min_x, max_x, min_y, max_y)
-        plt.show()
+        if t % timestep == 0:
+            draw_pos(pos, i.obstacles, i.target, colors, min_x, max_x, min_y, max_y)
+            plt.show()
+    draw_pos(pos, i.obstacles, i.target, colors, min_x, max_x, min_y, max_y) 
 
 
 # Plots the current state of all robots
@@ -57,7 +59,7 @@ def draw_pos(positions, obstacles, targets, colors, min_x, max_x, min_y, max_y):
     ax.imshow(masked_cells.T, cmap = colors, origin = "lower", vmin = 0)
     masked_obstacle_cells = np.ma.array(obstacle_cells, mask = (obstacle_cells==0))
     ax.imshow(masked_obstacle_cells.T, cmap = "Reds", origin = "lower", vmin = 0)
-    ax.scatter([x-min_x for (x, y) in targets], [y-min_y for (x, y) in targets], cmap = colors, c = [x for x in range(len(targets))])
+    #ax.scatter([x-min_x for (x, y) in targets], [y-min_y for (x, y) in targets], cmap = colors, c = [x for x in range(len(targets))])
     ax.set_xticks(np.arange(max_x-min_x+1)-0.5 + min_x, minor=True)
     ax.set_yticks(np.arange(max_y-min_y+1)-0.5 + min_y, minor=True)
     ax.grid(which="minor")

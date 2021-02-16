@@ -18,7 +18,7 @@ end
 # Implementation of A* algorithm
 # Adapted from pseudocode here, with modifications for our setting:
 #   https://mat.uab.cat/~alseda/MasterOpt/AStar-Algorithm.pdf
-function astar(start_pos::Array{Int64,1}, target_pos::Array{Int64,1}, obstacles, all_paths = [], start_time = 1, verbose = false)
+function astar(start_pos::Array{Int64,1}, target_pos::Array{Int64,1}, obstacles, all_paths = [], obstacle_to_robot = Dict{Tuple{Int64,Int64,Int64}, Int64}(), start_time = 1, verbose = false)
     final_time = maximum(append!([length(path) for path in all_paths], 1))
 
     open_heap_positions = PriorityQueue()
@@ -32,7 +32,9 @@ function astar(start_pos::Array{Int64,1}, target_pos::Array{Int64,1}, obstacles,
     iteration = 1
     while !isempty(open_heap_positions)
         if iteration > 10000
-            println("Exhausted allowed repetitions - no path found")
+            if verbose
+                println("Exhausted allowed repetitions - no path found")
+            end
             return nothing
         end
         iteration += 1
@@ -41,7 +43,7 @@ function astar(start_pos::Array{Int64,1}, target_pos::Array{Int64,1}, obstacles,
         curr_node = open_pos_to_state[curr_pos]
         delete!(open_pos_to_state, curr_pos)
 
-        neighbors = get_neighbors(curr_node.pos, curr_node.cost, obstacles, all_paths)
+        neighbors = get_neighbors(curr_node.pos, curr_node.cost, obstacles, all_paths, obstacle_to_robot, final_time)
 
         for neighbor_pos in neighbors
             if neighbor_pos == target_pos
@@ -66,7 +68,7 @@ function astar(start_pos::Array{Int64,1}, target_pos::Array{Int64,1}, obstacles,
                     #   (looking ahead further into the future than is
                     #   strictly necessary) to give the robot more options
                     #   when deciding where to "sidestep".
-                    if (target_pos in get_neighbors(curr_pos, curr_time + 1, obstacles, all_paths))
+                    if (target_pos in get_neighbors(curr_pos, curr_time + 1, obstacles, all_paths, obstacle_to_robot, final_time))
                         insert!(path_positions, length(path_positions) + 1, target_pos)
                         curr_pos = target_pos
 
@@ -77,14 +79,16 @@ function astar(start_pos::Array{Int64,1}, target_pos::Array{Int64,1}, obstacles,
                     else
                         # Select arbitrary neighbor to sidestep to
                         # We check each possibility and accept the first valid path
-                        for sidestep_pos in get_neighbors(curr_pos, curr_time, obstacles, all_paths)
-                            path_to_append = astar(sidestep_pos, target_pos, obstacles, all_paths, curr_time + 1, true)
+                        for sidestep_pos in get_neighbors(curr_pos, curr_time, obstacles, all_paths, obstacle_to_robot, final_time)
+                            path_to_append = astar(sidestep_pos, target_pos, obstacles, all_paths, obstacle_to_robot, curr_time + 1, verbose)
                             if !isnothing(path_to_append)
                                 append!(path_positions, path_to_append)
                                 return path_positions
                             end
                         end
-                        println("No valid path found (for sidestepping)")
+                        if verbose
+                            println("No valid path found (for sidestepping)")
+                        end
                         return nothing
                     end
                 end
@@ -118,7 +122,9 @@ function astar(start_pos::Array{Int64,1}, target_pos::Array{Int64,1}, obstacles,
         closed_pos_to_state[curr_pos] = curr_node
     end
 
-    println("No valid path found")
+    if verbose
+        println("No valid path found")
+    end
     return nothing
 end
 
@@ -132,10 +138,26 @@ function manhattan_dist(start_pos, target_pos)
     return (abs(x1 - x2) + abs(y1 - y2))
 end
 
-function get_neighbors(pos, t, obstacles, all_paths)
+function get_neighbors(pos, t, obstacles, all_paths, obstacle_to_robot, final_time)
     all_moves = [[0, 1], [0, -1], [1, 0], [-1, 0], [0,0]]
+    unchecked_neighbors = [pos + move for move in all_moves]
+    
+    potential_conflict_indices = [obstacle_to_robot[(t, x, y)]
+                                  for (x, y) in unchecked_neighbors
+                                  if (t, x, y) in keys(obstacle_to_robot)]
+    append!(potential_conflict_indices, [obstacle_to_robot[(t + 1, x, y)]
+                                  for (x, y) in unchecked_neighbors
+                                  if (t + 1, x, y) in keys(obstacle_to_robot)])
+    if t > final_time
+        append!(potential_conflict_indices, [obstacle_to_robot[(final_time, x, y)]
+                                  for (x, y) in unchecked_neighbors
+                                  if (final_time, x, y) in keys(obstacle_to_robot)])
+    end
+
+    potential_conflict_paths = all_paths[potential_conflict_indices]
+
     neighbors = [pos + move for move in all_moves if
-                   valid_move(t, obstacles, all_paths, pos, move)]
+                 valid_move(t, obstacles, potential_conflict_paths, pos, move)]
     return neighbors
 end
 
@@ -151,6 +173,11 @@ function valid_move(t, obstacles, all_paths, start_pos, move)
     end
 
     # Check if we would run into any moving obstacles
+    # TODO idea: mantain set of obstacles at time t
+    #            also mantain list of dict obstacles => robotnum
+    #   here, check if mypos +/- stuff is in obstacle set
+    #   then do deeper exploration if it is
+
     for path in all_paths
         if end_pos == position(path, t + 1)
             return false
