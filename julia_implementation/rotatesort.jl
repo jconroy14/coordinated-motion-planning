@@ -11,12 +11,17 @@ EXPANSION = 2
 py"""
 import cgshop2021_pyutils
 
-def load_instance(index):
+def load_single_instance(index):
     idb = cgshop2021_pyutils.InstanceDatabase('../cgshop_2021_instances.zip')
     #idb = cgshop2021_pyutils.InstanceDatabase('../test_instances.zip')
     instance_list = list(idb)
     i = instance_list[index] # 10 robots (smallest instance)
     return i
+
+def load_instances():
+    idb = cgshop2021_pyutils.InstanceDatabase('../cgshop_2021_instances.zip')
+    instance_list = list(idb)
+    return instance_list
 
 def save_paths(inst, all_paths):
     soln = convert_paths_into_soln(inst, all_paths)
@@ -704,10 +709,9 @@ end
 #without_obstacles = [0, 3, 4, 7, 11, 12, 13, 14, 15, 18, 19, 21, 22, 25, 26, 31, 34, 36, 37, 38, 39, 40, 42, 47, 49, 51, 52, 53, 57, 59, 62, 65, 67, 71, 72, 74, 75, 76, 77, 78, 84, 85, 86, 87, 89, 90, 93, 96, 97, 98, 100, 101, 102, 103, 104, 108, 111, 112, 114, 116, 117, 118, 120, 121, 122, 125, 126, 127, 129, 131, 132, 135, 140, 141, 142, 143, 144, 145, 146, 149, 150, 151, 154, 157, 158, 159, 160, 162, 165, 167, 169, 171, 173, 174, 176, 180, 183, 188, 192, 195, 196, 198, 202]
 without_obstacles = [21, 22, 25, 26, 31, 34, 36, 37, 38, 39, 40, 42, 47, 49, 51, 52, 53, 57, 59, 62, 65, 67, 71, 72, 74, 75, 76, 77, 78, 84, 85, 86, 87, 89, 90, 93, 96, 97, 98, 100, 101, 102, 103, 104, 108, 111, 112, 114, 116, 117, 118, 120, 121, 122, 125, 126, 127, 129, 131, 132, 135, 140, 141, 142, 143, 144, 145, 146, 149, 150, 151, 154, 157, 158, 159, 160, 162, 165, 167, 169, 171, 173, 174, 176, 180, 183, 188, 192, 195, 196, 198, 202]
 total_to_run = size(without_obstacles)[1]
+all_instances = py"load_instances"()
 for (i, curr_index) in enumerate(without_obstacles)
-    inst = py"load_instance"(curr_index)
-    println("Obstacles:")
-    println(inst[:obstacles])
+    inst = all_instances[curr_index]
     all_paths = robot_rotate_sort(inst)
     write_solution(inst, all_paths)
     #py"validate_paths"(inst, all_paths)
